@@ -21,7 +21,6 @@ Language switch: RU / EN in the top right of the page.
 |---|---|
 | `index.html` | Interactive bilingual memo |
 | `pilot-plan.pdf` | Printable version of the memo |
-| `linkedin-post.md` | Optional LinkedIn post text (RU / EN) |
 
 ## How to view
 
