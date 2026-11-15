@@ -4,7 +4,7 @@ Synthetic B2B hotel pricing case. A 90-day pilot plan for a travel platform: sel
 
 All figures are modelled. Nothing here is proprietary company data.
 
-**Open the memo:** [index.html](index.html) · [PDF](pilot-plan.pdf)
+**Open the memo:** [Live page](https://kochetova-daryaa.github.io/paid-flexibility-ai-rebooking/) · [index.html](index.html) · [PDF](pilot-plan.pdf)
 
 Language switch: RU / EN in the top right of the page.
 

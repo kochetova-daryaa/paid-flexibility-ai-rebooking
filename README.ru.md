@@ -4,7 +4,7 @@
 
 Все цифры смоделированы. В репозитории нет данных реальной компании.
 
-**Открыть мемо:** [index.html](index.html) · [PDF](pilot-plan.pdf)
+**Открыть мемо:** [Онлайн](https://kochetova-daryaa.github.io/paid-flexibility-ai-rebooking/) · [index.html](index.html) · [PDF](pilot-plan.pdf)
 
 Переключатель языка: RU / EN в правом верхнем углу страницы.
 
