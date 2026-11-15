@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="90-day pricing pilot: price flexibility by booking horizon and keep a deep firm rate inside a closed channel. Synthetic portfolio, seed 42.">
+<title>Платная гибкость против ИИ-перебронирования · План пилота на 90 дней</title>
+<style>
+  :root {
+    --paper: #f5f6f7;
+    --card: #ffffff;
+    --ink: #111418;
+    --text: #2b3036;
+    --muted: #5d646d;
+    --line: #e3e6e9;
+    --accent: #0f766e;
+    --accent-ink: #0b5e57;
+    --soft: #ecf5f4;
+    --soft-line: #cfe4e1;
+    --night: #1b1f24;
+    --track: #e8ecee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+  .lang-en { display: none !important; }
+  body[data-lang="en"] .lang-en { display: block !important; }
+  body[data-lang="en"] h1.kicker.lang-en,
+  body[data-lang="en"] .tag.lang-en { display: inline-block !important; }
+  body[data-lang="en"] th.lang-en,
+  body[data-lang="en"] td.lang-en { display: table-cell !important; }
+  body[data-lang="en"] .lang-ru { display: none !important; }
+  header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 24px 8px;
+    text-align: center;
+  }
+  .kicker {
+    display: inline-block;
+    margin: 0;
+    padding: 12px 28px;
+    border-radius: 20px;
+    background: var(--night);
+    border: 1px solid var(--night);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.45;
+    color: #ffffff;
+    text-align: center;
+  }
+  .kicker small { color: #9fd6cf; }
+  .kicker small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    opacity: 0.92;
+  }
+  h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    text-align: center;
+    color: var(--ink);
+  }
+  h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+    color: var(--ink);
+  }
+  .toggle {
+    position: absolute;
+    right: 24px;
+    top: 22px;
+    display: inline-flex;
+    background: var(--track);
+    padding: 3px;
+    border-radius: 999px;
+    gap: 2px;
+  }
+  .toggle button {
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  body[data-lang="en"] #btn-en,
+  body[data-lang="ru"] #btn-ru {
+    background: var(--accent);
+    color: white;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 8px 24px 28px; }
+  .problem {
+    margin-bottom: 10px;
+    background: var(--night);
+    border: 1px solid var(--night);
+    border-radius: 16px;
+    padding: 14px 18px 12px;
+    text-align: center;
+  }
+  .synthetic {
+    margin: 0 0 10px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .synthetic span {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: var(--soft);
+    border: 1px solid var(--soft-line);
+  }
+  .problem .tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(15, 118, 110, 0.35);
+    color: #9fd6cf;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .problem p { margin: 0; color: #e6e9ec; }
+  .problem strong { color: #ffffff; }
+  .problem p + p { margin-top: 8px; }
+  .decision {
+    background: var(--soft);
+    border: 1px solid var(--soft-line);
+    border-radius: 16px;
+    padding: 14px 18px 12px;
+    text-align: center;
+  }
+  .decision .tag {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .decision p { margin: 0; color: var(--ink); }
+  .decision p + p { margin-top: 8px; }
+  .gains {
+    margin-top: 10px;
+    padding: 14px 18px 14px;
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    text-align: center;
+  }
+  .gains .tag {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--night);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .gains-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .gains-grid > div + div { border-left: 1px solid var(--line); padding-left: 14px; }
+  .gains h3 { color: var(--accent-ink); }
+  .gains ul {
+    margin: 0;
+    padding-left: 18px;
+    text-align: left;
+    color: var(--text);
+    font-size: 13.5px;
+  }
+  .gains li + li { margin-top: 4px; }
+  .gains b { color: var(--ink); }
+  .period {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .period div, .card, .kpi, .step, .ask {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .period div {
+    padding: 10px 8px;
+    text-align: center;
+    background: var(--card);
+  }
+  .period span, .kpi span {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .period strong {
+    display: block;
+    margin-top: 3px;
+    font-size: 15px;
+    text-align: center;
+  }
+  .grid-3, .steps, .kpis, .effects {
+    display: grid;
+    gap: 10px;
+  }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); margin-top: 4px; }
+  .card { padding: 12px 14px 12px; }
+  .card p, .step p, .ask p { margin: 0; color: var(--text); }
+  .effects { grid-template-columns: 1.15fr 1.15fr 0.9fr; margin-top: 12px; }
+  .effect {
+    border-radius: 16px;
+    padding: 12px 14px 12px;
+    text-align: center;
+    border: 1px solid var(--line);
+    background: var(--card);
+  }
+  .effect.prove {
+    border: 2px solid var(--accent);
+    background: var(--soft);
+  }
+  .effect .label {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .effect strong {
+    display: block;
+    margin: 4px 0 2px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .effect.prove strong { color: var(--accent-ink); }
+  .effect em {
+    display: block;
+    font-style: normal;
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .bars { margin-top: 8px; text-align: left; }
+  .bar-row { display: grid; grid-template-columns: 1fr 52px; gap: 8px; align-items: center; margin-top: 5px; }
+  .bar-row span { font-size: 11.5px; color: var(--text); }
+  .bar-row b { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+  .track { height: 6px; border-radius: 999px; background: var(--track); margin-top: 3px; }
+  .track i { display: block; height: 6px; border-radius: 999px; background: var(--accent); }
+  .steps { grid-template-columns: repeat(3, 1fr); }
+  .step { padding: 12px 12px 10px; text-align: center; }
+  .step .n {
+    display: inline-block;
+    min-width: 28px;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--soft);
+    color: var(--accent-ink);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .ladder {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .ladder th {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 4px 4px 6px;
+  }
+  .ladder td {
+    text-align: center;
+    padding: 5px 4px;
+    border-top: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  .ladder td:first-child { font-weight: 700; }
+  section { margin-top: 14px; }
+  .kpis { grid-template-columns: repeat(6, 1fr); }
+  .kpi {
+    padding: 10px 8px 8px;
+    text-align: center;
+    border: 2px solid var(--accent);
+    background: var(--card);
+  }
+  .kpi strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi em {
+    display: block;
+    margin-top: 3px;
+    font-style: normal;
+    font-size: 11px;
+    color: var(--accent-ink);
+    font-weight: 700;
+    text-align: center;
+  }
+  .ask {
+    margin-top: 12px;
+    padding: 12px 16px;
+    text-align: center;
+    border: 1px solid var(--soft-line);
+    background: var(--soft);
+  }
+  .ask strong { color: var(--accent-ink); }
+  details {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  summary {
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    color: var(--accent-ink);
+  }
+  details p { margin: 8px 0 0; }
+  .foot {
+    margin: 8px 0 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .problem p, .decision p, .card p, .step p, .ask p, .effect em, details p { text-align: left; }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 18px 12px;
+  }
+  .chart-row, .chart-axis {
+    display: grid;
+    grid-template-columns: 230px 1fr 170px;
+    gap: 12px;
+    align-items: center;
+  }
+  .chart-row + .chart-row { margin-top: 10px; }
+  .chart-label { font-size: 13px; font-weight: 700; color: var(--ink); text-align: left; }
+  .chart-label small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .chart-bar { height: 22px; border-radius: 6px; background: var(--track); overflow: hidden; }
+  .chart-bar i { display: block; height: 100%; border-radius: 6px; }
+  .chart-bar i.today { background: #b8bcc4; }
+  .chart-bar i.threat { background: var(--night); }
+  .chart-bar i.pilot { background: var(--accent); }
+  .chart-val { text-align: left; font-variant-numeric: tabular-nums; }
+  .chart-val b { font-size: 15px; color: var(--ink); }
+  .chart-val span { display: block; font-size: 11px; color: var(--muted); }
+  .chart-axis { margin-top: 6px; }
+  .chart-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+  .chart-axis-title { font-size: 10px; color: var(--muted); text-align: left; }
+  .chart-note { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); text-align: left; }
+  .chart-card { break-inside: avoid; }
+  @media screen and (max-width: 760px) {
+    .chart-row, .chart-axis { grid-template-columns: 1fr; gap: 4px; }
+  }
+  @page { size: A4; margin: 10mm; }
+  @media print {
+    html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-size: 12px; }
+    .toggle { display: none; }
+    main, header { max-width: none; padding-left: 0; padding-right: 0; }
+    header { padding-top: 0; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .effects { grid-template-columns: 1.15fr 1.15fr 0.9fr; }
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .period { grid-template-columns: repeat(4, 1fr); }
+    .period strong { font-size: 12px; }
+    .gains-grid { grid-template-columns: repeat(3, 1fr); }
+    .gains ul { font-size: 12px; }
+    .problem, .decision, .gains, .card, .step, .effect, .kpi, .ask, section h2 { break-inside: avoid; }
+    section h2 { break-after: avoid; }
+  }
+  @media screen and (max-width: 980px) {
+    .grid-3, .steps, .effects, .kpis, .period { grid-template-columns: 1fr 1fr; }
+    .gains-grid { grid-template-columns: 1fr; }
+    .gains-grid > div + div { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 10px; }
+    .kpis { grid-template-columns: 1fr 1fr 1fr; }
+    .toggle { position: static; margin-bottom: 8px; }
+    header { flex-direction: column; }
+  }
+</style>
+</head>
+<body data-lang="ru">
+<header>
+  <div class="toggle" role="group" aria-label="Language">
+    <button id="btn-ru" type="button" onclick="setLang('ru')">RU</button>
+    <button id="btn-en" type="button" onclick="setLang('en')">EN</button>
+  </div>
+  <h1 class="kicker lang-ru">Платная гибкость против ИИ-перебронирования<small>План пилота на 90 дней · B2B, отели</small></h1>
+  <h1 class="kicker lang-en">Paid flexibility vs AI rebooking<small>90-day pilot plan · B2B hotels</small></h1>
+</header>
+<main>
+  <p class="synthetic lang-ru"><span>Проект выполнен на синтетических данных. Все цифры смоделированы и не относятся к реальной компании.</span></p>
+  <p class="synthetic lang-en"><span>This project is built on synthetic data. All figures are modelled and do not belong to any real company.</span></p>
+  <div class="problem">
+    <div class="tag lang-ru">Бизнес-проблема</div>
+    <div class="tag lang-en">Business problem</div>
+    <p class="lang-ru"><strong>Бесплатная отмена даёт клиенту право в любой момент обменять бронь на более дешёвую, а платформа за это право ничего не получает.</strong> Пока цену после покупки проверяют единицы, это право почти ничего не стоит. ИИ-агент проверяет цену каждый день по каждой брони и пользуется этим правом всякий раз, когда отель снижает тариф. В итоге платформа зарабатывает с самой низкой цены за весь период продаж, а отель, видя волну отмен, перестаёт давать каналу лучшие тарифы. Модель с бесплатной гибкостью при массовом распространении ИИ-агентов теряет рентабельность.</p>
+    <p class="lang-en"><strong>Free cancellation gives the client the right to swap a booking for a cheaper one at any time, and the platform earns nothing for that right.</strong> While only a few people check the price after purchase, the right is worth almost nothing. An AI agent checks the price every day on every booking and uses the right whenever the hotel cuts the rate. The platform ends up earning on the lowest price of the whole sales period, and the hotel, seeing a wave of cancellations, stops giving the channel its best rates. Once AI agents are widespread, a model with free flexibility loses its profitability.</p>
+  </div>
+  <div class="decision">
+    <div class="tag lang-ru">Предлагаемое решение</div>
+    <div class="tag lang-en">Proposed solution</div>
+    <p class="lang-ru">Утвердить пилот на одном рынке. Базовая цена номера становится твёрдой бронью. Гибкость продаётся отдельно и дорожает вместе с горизонтом: 4% в последние 14 дней, 8% на окне 15-89 дней, 11% если до заезда больше 90 дней. Скидка от 8% доходит до клиента только у партнёра, который держит её в закрытом канале.</p>
+    <p class="lang-en">Approve a single-market pilot. The firm rate becomes the base price of the room. Flexibility is sold on its own and rises with the booking horizon: 4% inside 14 days, 8% on a 15-89 day window, 11% beyond 90 days. A discount of 8% or more reaches the client only through a partner who keeps it in a closed channel.</p>
+    <p class="lang-ru">Пилот обязан подтвердить <strong>+0,50 млн €</strong> чистой выручки в квартал на полном портфеле. Если в закрытом канале зазор действительно доходит до 8-11%, при масштабировании это даёт <strong>+1,40 млн €</strong> в квартал. Ещё <strong>2,10 млн €</strong> текущей выручки приходится на объекты, которые ограничивают каналы с утечкой тарифа: пилот нужен, чтобы этот объём остался у нас.</p>
+    <p class="lang-en">The pilot has to prove <strong>+€0.50m</strong> of quarterly net revenue on the full book. If the closed channel actually delivers an 8-11% gap, the rollout is worth <strong>+€1.40m</strong> a quarter. Another <strong>€2.10m</strong> of revenue we already earn sits with properties that restrict channels where rates leak. The pilot is how that volume stays with us.</p>
+  </div>
+
+  <div class="gains">
+    <div class="tag lang-ru">Что даёт решение</div>
+    <div class="tag lang-en">What the decision delivers</div>
+    <div class="gains-grid">
+      <div>
+        <h3 class="lang-ru">Выгода</h3>
+        <h3 class="lang-en">Upside</h3>
+        <ul class="lang-ru">
+          <li><b>+0,50 млн € в квартал</b>, или 2,0 млн € в год: гибкость начинает приносить деньги, +6% к чистой выручке.</li>
+          <li><b>До +1,40 млн € в квартал</b>, или 5,6 млн € в год, при масштабировании на весь портфель.</li>
+          <li>Новый спрос на твёрдые брони: <b>+11,1 млн € GBV</b> от клиентов, которым нужна цена на 8-11% ниже рынка.</li>
+        </ul>
+        <ul class="lang-en">
+          <li><b>+€0.50m a quarter</b>, or €2.0m a year: flexibility starts earning money, +6% on net revenue.</li>
+          <li><b>Up to +€1.40m a quarter</b>, or €5.6m a year, once rolled out to the full book.</li>
+          <li>New demand for firm bookings: <b>+€11.1m GBV</b> from clients who need a price 8-11% below the market.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="lang-ru">От чего страхует</h3>
+        <h3 class="lang-en">What it protects against</h3>
+        <ul class="lang-ru">
+          <li>Размывания маржи при массовом перебронировании ИИ-агентами: риск <b>до 0,41 млн € в квартал</b>.</li>
+          <li>Потери доступа к тарифам отелей: под угрозой <b>2,10 млн € текущей выручки</b>, четверть квартала.</li>
+          <li>Утечки закрытых тарифов на открытую витрину: <b>с 29% до менее 5%</b>.</li>
+        </ul>
+        <ul class="lang-en">
+          <li>Margin erosion from mass AI-agent rebooking: a risk of <b>up to €0.41m a quarter</b>.</li>
+          <li>Losing access to hotel rates: <b>€2.10m of current revenue</b> at stake, a quarter of the total.</li>
+          <li>Closed rates leaking to open storefronts: <b>from 29% to under 5%</b>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="lang-ru">Стратегический эффект</h3>
+        <h3 class="lang-en">Strategic effect</h3>
+        <ul class="lang-ru">
+          <li>ИИ-агенты становятся источником выручки, а не убытка: чем чаще они проверяют цену, тем больше спрос на платную гибкость.</li>
+          <li>Отели доверяют платформе лучшие тарифы, потому что знают, как они будут использованы. Это преимущество, которое конкуренты быстро не повторят.</li>
+          <li>Выручка становится предсказуемее: доля твёрдых броней растёт <b>с 24% до 36%</b>, отмен на проданном объёме меньше.</li>
+        </ul>
+        <ul class="lang-en">
+          <li>AI agents become a source of revenue, not loss: the more often they check the price, the more demand there is for paid flexibility.</li>
+          <li>Hotels trust the platform with their best rates because they know how those rates will be used. Competitors cannot copy that quickly.</li>
+          <li>Revenue becomes more predictable: the share of firm bookings rises <b>from 24% to 36%</b>, with fewer cancellations on sold volume.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="period">
+    <div>
+      <span class="lang-ru">Период и контур</span>
+      <span class="lang-en">Window and book</span>
+      <strong class="lang-ru">03.08.2026-31.10.2026</strong>
+      <strong class="lang-en">3 Aug 2026-31 Oct 2026</strong>
+    </div>
+    <div>
+      <span class="lang-ru">Созданные брони</span>
+      <span class="lang-en">Bookings created</span>
+      <strong class="lang-ru">180 000 · GBV 133,2 млн €</strong>
+      <strong class="lang-en">180,000 · GBV €133.2m</strong>
+    </div>
+    <div>
+      <span class="lang-ru">Чистая выручка платформы</span>
+      <span class="lang-en">Platform net revenue</span>
+      <strong class="lang-ru">8,4 млн € · 6,3% GBV</strong>
+      <strong class="lang-en">€8.4m · 6.3% of GBV</strong>
+    </div>
+    <div>
+      <span class="lang-ru">Объём пилота</span>
+      <span class="lang-en">Pilot scope</span>
+      <strong class="lang-ru">Рынок А · 12% портфеля</strong>
+      <strong class="lang-en">Market A · 12% of the book</strong>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="lang-ru">ИИ-агенты увеличат перебронирование в 2,3 раза, пилот опускает его ниже сегодняшнего уровня</h2>
+    <h2 class="lang-en">AI agents raise rebooking 2.3x, the pilot takes it below today's level</h2>
+    <div class="chart-card">
+      <div class="chart-row">
+        <div class="chart-label"><span class="lang-ru">Сегодня</span><span class="lang-en">Today</span><small class="lang-ru">цену после покупки проверяют единицы</small><small class="lang-en">few people check the price after booking</small></div>
+        <div class="chart-bar"><i class="today" style="width:40.5%"></i></div>
+        <div class="chart-val"><b class="lang-ru">8,1%</b><b class="lang-en">8.1%</b><span class="lang-ru">потеря 0,18 млн € в квартал</span><span class="lang-en">loss of €0.18m a quarter</span></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-label"><span class="lang-ru">ИИ-агенты, правила прежние</span><span class="lang-en">AI agents, rules unchanged</span><small class="lang-ru">агент ловит каждое снижение цены</small><small class="lang-en">the agent catches every price drop</small></div>
+        <div class="chart-bar"><i class="threat" style="width:95%"></i></div>
+        <div class="chart-val"><b>19%</b><span class="lang-ru">потеря 0,41 млн € в квартал</span><span class="lang-en">loss of €0.41m a quarter</span></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-label"><span class="lang-ru">ИИ-агенты и пилот</span><span class="lang-en">AI agents and the pilot</span><small class="lang-ru">гибкость платная, тариф в закрытом канале</small><small class="lang-en">paid flexibility, closed-channel rate</small></div>
+        <div class="chart-bar"><i class="pilot" style="width:22.5%"></i></div>
+        <div class="chart-val"><b class="lang-ru">≤4,5%</b><b class="lang-en">≤4.5%</b><span class="lang-ru">потеря 0,08 млн € в квартал</span><span class="lang-en">loss of €0.08m a quarter</span></div>
+      </div>
+      <div class="chart-axis">
+        <div class="chart-axis-title"><span class="lang-ru">Доля гибких броней, %</span><span class="lang-en">Share of flexible bookings, %</span></div>
+        <div class="chart-ticks"><span>0%</span><span>5%</span><span>10%</span><span>15%</span><span>20%</span></div>
+        <div></div>
+      </div>
+      <p class="chart-note lang-ru">Доля гибких броней, которые отменяют и бронируют заново ради более низкой цены. Потеря: чистая выручка платформы за квартал по броням, ушедшим к другому поставщику при перебронировании. Синтетические данные, расчёт в блоке «Допущения и сборка цифр».</p>
+      <p class="chart-note lang-en">Share of flexible bookings cancelled and rebooked for a lower price. Loss: the platform's quarterly net revenue on bookings that move to another supplier when rebooked. Synthetic data, calculation in "Assumptions and how the figures are built".</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="lang-ru">Три факта, на которых держится решение</h2>
+    <h2 class="lang-en">Three facts behind the decision</h2>
+    <div class="grid-3">
+      <article class="card">
+        <h3 class="lang-ru">Скидка 1,8% почти равна ценности ожидания</h3>
+        <h3 class="lang-en">A 1.8% gap barely pays for waiting</h3>
+        <p class="lang-ru">Агент сравнивает скидку за твёрдую бронь с выгодой от ожидания. В 19% гибких броней цена до заезда падала минимум на 4%, в среднем на 8,4%, поэтому ожидание стоит 19% × 8,4% = 1,6% чека. Твёрдая бронь выигрывает всего 0,2 п.п., а гибкая ещё и страхует смену планов. Агент выбирает гибкий тариф и перебронирует при каждом снижении цены.</p>
+        <p class="lang-en">An agent compares the firm-rate saving with the gain from waiting. In 19% of flexible bookings the price fell by at least 4% before arrival, by 8.4% on average, so waiting is worth 19% × 8.4% = 1.6% of the bill. The firm rate wins by only 0.2 pp, while the flexible one also covers a change of plans. The agent picks the flexible rate and rebooks at every price drop.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Экономию забирает партнёр</h3>
+        <h3 class="lang-en">The partner keeps the saving</h3>
+        <p class="lang-ru">Сейчас ради цены перебронируют 8,1% гибких броней. 62% этих событий делают инструменты партнёров, и 71% разницы остаётся у партнёра. Гость её часто не видит. Отель видит отмену и чужую маржу и в ответ держит короткий зазор для всех каналов. Платформа теряет тариф, которым могла отличаться.</p>
+        <p class="lang-en">Today 8.1% of flexible bookings are rebooked for a lower price. Partner tools drive 62% of those events, and the partner keeps 71% of the gap. The guest often never sees it. The hotel sees the cancellation and someone else's margin, then caps the gap for every channel. The platform loses the rate that could have set it apart.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Скидка 11% согласована и ждёт закрытого канала</h3>
+        <h3 class="lang-en">An 11% discount is granted and waiting for a closed channel</h3>
+        <p class="lang-ru">На 61% объёма отели готовы дать минус 11% за бронь, которая сохранится. Зазор от 8% сейчас есть на 17% объёма. Причина в утечке: 29% закрытых тарифов за 72 часа появляются на открытой витрине, ниже собственной цены отеля. Закрытый канал возвращает скидку, которую поставка уже готова дать.</p>
+        <p class="lang-en">On 61% of volume, hotels will grant 11% off for a booking that stays. A gap of 8% or more exists on 17% of volume today. Leakage is why: 29% of closed rates show up on an open storefront within 72 hours, under the hotel's own price. A closed channel releases a discount the supply is already willing to give.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="lang-ru">Прирост и защита текущего объёма считаются раздельно</h2>
+    <h2 class="lang-en">The gain and the volume we already have stay in separate accounts</h2>
+    <div class="effects">
+      <div class="effect prove">
+        <span class="label lang-ru">Обязательство пилота · полный портфель</span>
+        <span class="label lang-en">What the pilot must prove · full book</span>
+        <strong class="lang-ru">+0,50 млн €</strong>
+        <strong class="lang-en">+€0.50m</strong>
+        <em class="lang-ru">+6% к чистой выручке 8,4 млн €. Источник: платформа оставляет себе 1,5 п.п. из премии за гибкость на законтрактованной поставке.</em>
+        <em class="lang-en">+6% on €8.4m net revenue. Source: the platform keeps 1.5 pp of the flexibility premium on contracted supply.</em>
+      </div>
+      <div class="effect">
+        <span class="label lang-ru">Масштаб, если зазор открылся</span>
+        <span class="label lang-en">Rollout, if the gap opens</span>
+        <strong class="lang-ru">+1,40 млн €</strong>
+        <strong class="lang-en">+€1.40m</strong>
+        <em class="lang-ru">Три источника на шкале ниже.</em>
+        <em class="lang-en">Three sources on the scale below.</em>
+        <div class="bars" aria-hidden="true">
+          <div class="bar-row"><span class="lang-ru">Премия за гибкость</span><span class="lang-en">Flexibility premium</span><b class="lang-ru">0,50</b><b class="lang-en">0.50</b></div>
+          <div class="track"><i style="width:36%"></i></div>
+          <div class="bar-row"><span class="lang-ru">Твёрдый спрос</span><span class="lang-en">Firm demand</span><b class="lang-ru">0,70</b><b class="lang-en">0.70</b></div>
+          <div class="track"><i style="width:50%"></i></div>
+          <div class="bar-row"><span class="lang-ru">Бронь остаётся у нас</span><span class="lang-en">Booking stays</span><b class="lang-ru">0,20</b><b class="lang-en">0.20</b></div>
+          <div class="track"><i style="width:14%"></i></div>
+        </div>
+      </div>
+      <div class="effect">
+        <span class="label lang-ru">Уже в выручке · удержать</span>
+        <span class="label lang-en">Already in revenue · keep it</span>
+        <strong class="lang-ru">2,10 млн €</strong>
+        <strong class="lang-en">€2.10m</strong>
+        <em class="lang-ru">25% квартальной выручки. Объекты, которые уже сузили канал из-за утечки. Это запас, а не прирост.</em>
+        <em class="lang-en">25% of quarterly revenue. Properties that already narrowed a channel because a rate leaked. A stock to protect, not a gain to add.</em>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="lang-ru">Три правила пилота</h2>
+    <h2 class="lang-en">Three rules of the pilot</h2>
+    <div class="steps">
+      <article class="step">
+        <div class="n">01</div>
+        <h3 class="lang-ru">Цена растёт с горизонтом</h3>
+        <h3 class="lang-en">The price rises with the horizon</h3>
+        <p class="lang-ru">На длинном окне агент успевает проверить цену десятки раз. Премия там выше. В последние две недели времени на перебронирование мало, и премия ниже, чтобы сохранить спрос.</p>
+        <p class="lang-en">On a long window the agent has time to check the price many times, so the premium is higher. Inside two weeks there is little time to rebook, so the premium is lower and demand holds.</p>
+        <table class="ladder">
+          <thead>
+            <tr>
+              <th class="lang-ru">До заезда</th>
+              <th class="lang-en">Lead time</th>
+              <th class="lang-ru">Премия</th>
+              <th class="lang-en">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="lang-ru">90+ дней</td><td class="lang-en">90+ days</td>
+              <td>+11%</td>
+            </tr>
+            <tr>
+              <td class="lang-ru">15-89 дней</td><td class="lang-en">15-89 days</td>
+              <td>+8%</td>
+            </tr>
+            <tr>
+              <td class="lang-ru">0-14 дней</td><td class="lang-en">0-14 days</td>
+              <td>+4%</td>
+            </tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="step">
+        <div class="n">02</div>
+        <h3 class="lang-ru">Глубокая скидка живёт в закрытом канале</h3>
+        <h3 class="lang-en">The deep discount stays closed</h3>
+        <p class="lang-ru">Зазор от 8% получает партнёр с дополнением к договору: тариф нельзя публиковать. Если закрытый тариф найден на открытой витрине, он выключается в тот же день, а партнёр теряет доступ к закрытым тарифам на 30 дней. Из премии 8% платформа оставляет себе 1,5 п.п. Остальное получает отель как плату за риск пустого номера.</p>
+        <p class="lang-en">A gap of 8% or more goes to a partner under a contract addendum: the rate cannot be published. If a closed rate is found on an open storefront, it is switched off the same day and the partner loses access to closed rates for 30 days. Of an 8% premium the platform keeps 1.5 pp. The hotel keeps the rest as the price of an empty-room risk.</p>
+      </article>
+      <article class="step">
+        <div class="n">03</div>
+        <h3 class="lang-ru">Частое перебронирование стоит дороже</h3>
+        <h3 class="lang-en">Frequent rebooking costs more</h3>
+        <p class="lang-ru">Партнёр, у которого перебронирование ради цены выше 4% гибких броней, платит премию 12% на длинном окне или теряет доступ к закрытым тарифам. Гостю, который страхует смену планов, на твёрдом тарифе доступно покрытие отмены за 2,4% чека. Покрытие платит за смену планов и не платит за отмену ради более низкой цены. В цифры +0,50 и +1,40 оно не входит.</p>
+        <p class="lang-en">A partner whose price-driven rebooking exceeds 4% of flexible bookings pays a 12% premium on the long window, or loses access to closed rates. A guest who wants cover for a change of plans can buy cancellation cover at 2.4% of the bill on the firm rate. The cover pays for a change of plans and does not pay for cancelling to chase a lower price. It is outside the +0.50 and +1.40.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="lang-ru">Риски и как мы их снимаем</h2>
+    <h2 class="lang-en">Risks and how we contain them</h2>
+    <div class="grid-3">
+      <article class="card">
+        <h3 class="lang-ru">Гибкость дорожает, конверсия падает</h3>
+        <h3 class="lang-en">Flexibility costs more, conversion drops</h3>
+        <p class="lang-ru">В последние 14 дней премия всего 4%, возвратный тариф остаётся в продаже. Если конверсия падает больше чем на 1,5% к контролю, пилот останавливается на 45-й день.</p>
+        <p class="lang-en">Inside 14 days the premium is only 4%, and the flexible rate stays on sale. If conversion falls more than 1.5% against the control, the pilot stops on day 45.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Партнёры уходят к конкурентам</h3>
+        <h3 class="lang-en">Partners move to competitors</h3>
+        <p class="lang-ru">Взамен бесплатного перебронирования партнёр получает закрытый тариф на 8-11% ниже открытого. Такой цены у конкурентов нет, пока отели не доверяют им закрытые тарифы.</p>
+        <p class="lang-en">In exchange for free rebooking, the partner gets a closed rate 8-11% below the open one. Competitors cannot match that price while hotels do not trust them with closed rates.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Отели не примут новую сетку</h3>
+        <h3 class="lang-en">Hotels reject the new ladder</h3>
+        <p class="lang-ru">Пилот идёт только на объектах с прямым контрактом. Отель получает большую часть премии за гибкость и меньше отмен на уже проданном объёме.</p>
+        <p class="lang-en">The pilot runs only on properties with a direct contract. The hotel keeps most of the flexibility premium and sees fewer cancellations on volume it has already sold.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="lang-ru">Критерии успеха и остановки пилота</h2>
+    <h2 class="lang-en">Pilot success and stop criteria</h2>
+    <div class="kpis">
+      <div class="kpi">
+        <span class="lang-ru">Зазор, который видит клиент</span>
+        <span class="lang-en">Gap the client sees</span>
+        <strong class="lang-ru">1,8% → 8%+</strong>
+        <strong class="lang-en">1.8% → 8%+</strong>
+        <em class="lang-ru">условие масштаба</em>
+        <em class="lang-en">rollout condition</em>
+      </div>
+      <div class="kpi">
+        <span class="lang-ru">Доля твёрдых броней</span>
+        <span class="lang-en">Share of firm bookings</span>
+        <strong>24% → 36%</strong>
+        <em class="lang-ru">в пилотной когорте</em>
+        <em class="lang-en">in the pilot cohort</em>
+      </div>
+      <div class="kpi">
+        <span class="lang-ru">Утечка за 72 часа</span>
+        <span class="lang-en">Leakage within 72 hours</span>
+        <strong>29% → &lt;5%</strong>
+        <em class="lang-ru">цель пилота</em>
+        <em class="lang-en">pilot target</em>
+      </div>
+      <div class="kpi">
+        <span class="lang-ru">Перебронирование ради цены</span>
+        <span class="lang-en">Price-driven rebooking</span>
+        <strong class="lang-ru">8,1% → ≤4,5%</strong>
+        <strong class="lang-en">8.1% → ≤4.5%</strong>
+        <em class="lang-ru">от гибких броней</em>
+        <em class="lang-en">of flexible bookings</em>
+      </div>
+      <div class="kpi">
+        <span class="lang-ru">Выручка пилота vs контроль</span>
+        <span class="lang-en">Pilot revenue vs control</span>
+        <strong>+6%</strong>
+        <em class="lang-ru">около +60 тыс. €</em>
+        <em class="lang-en">about +€60k</em>
+      </div>
+      <div class="kpi">
+        <span class="lang-ru">Конверсия поиска в бронь</span>
+        <span class="lang-en">Search-to-book conversion</span>
+        <strong class="lang-ru">в пределах 1,5%</strong>
+        <strong class="lang-en">within 1.5%</strong>
+        <em class="lang-ru">от базы контроля</em>
+        <em class="lang-en">of the control baseline</em>
+      </div>
+    </div>
+  </section>
+
+  <div class="ask">
+    <p class="lang-ru"><strong>Просьба к комитету.</strong> Утвердить рынок А на 90 дней и рынок Б как контроль. Объём пилота 16,0 млн € GBV. Отдельный бюджет не нужен: работа идёт в текущем контуре ценообразования, плюс одно дополнение к договорам партнёров. График: 2 недели на подписание дополнений с партнёрами и отелями, затем 90 дней пилота. На 45-й день пилот останавливается, если конверсия хуже порога или утечка выше 5%. На 90-й день комитет решает о масштабировании. Возвратный тариф остаётся в продаже. Паритет с ценой отеля на открытой витрине сохраняется. Разница при перебронировании остаётся отелю.</p>
+    <p class="lang-en"><strong>The ask.</strong> Approve Market A for 90 days, with Market B as the control. Pilot volume is €16.0m GBV. No separate budget: the work sits in the current pricing cycle, plus one addendum to partner contracts. Timeline: 2 weeks to sign addenda with partners and hotels, then 90 days of pilot. On day 45 the pilot stops if conversion misses the gate or leakage is above 5%. On day 90 the committee decides on rollout. The flexible rate stays on sale. Open-storefront parity with the hotel's price stays in place. The rebooking gap stays with the hotel.</p>
+  </div>
+
+  <section>
+    <h2 class="lang-ru">Рекомендации смежным подразделениям</h2>
+    <h2 class="lang-en">Recommendations for adjacent teams</h2>
+    <div class="grid-3">
+      <article class="card">
+        <h3 class="lang-ru">Работа с отелями</h3>
+        <h3 class="lang-en">Hotel contracting</h3>
+        <p class="lang-ru">Согласовать сетку премий за гибкость с объектами на прямом контракте рынка А. Начать с отелей, которые уже ограничили канал из-за утечки: на них приходится 2,10 млн € выручки.</p>
+        <p class="lang-en">Agree the flexibility premium ladder with directly contracted properties in Market A. Start with hotels that have already restricted the channel because of leakage: they account for €2.10m of revenue.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Работа с партнёрами</h3>
+        <h3 class="lang-en">Partner management</h3>
+        <p class="lang-ru">Объяснить партнёрам обмен: вместо бесплатного перебронирования они получают закрытый тариф на 8-11% ниже рынка. Ежемесячно разбирать с партнёрами, у которых перебронирование выше 4%.</p>
+        <p class="lang-en">Explain the trade to partners: instead of free rebooking they get a closed rate 8-11% below the market. Review partners whose rebooking exceeds 4% every month.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Юридический отдел</h3>
+        <h3 class="lang-en">Legal</h3>
+        <p class="lang-ru">Подготовить дополнение к договору с партнёрами: запрет публикации закрытого тарифа, отключение в день нарушения и 30 дней без доступа. Отдельно описать условия покрытия отмены за 2,4% чека.</p>
+        <p class="lang-en">Draft the partner contract addendum: no publishing of closed rates, same-day switch-off on breach and 30 days without access. Set out the terms of cancellation cover at 2.4% of the bill separately.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Продукт и разработка</h3>
+        <h3 class="lang-en">Product and engineering</h3>
+        <p class="lang-ru">Показывать в выдаче и API твёрдую цену и цену гибкости раздельно, с премией по горизонту заезда. Помечать, кто создал бронь: человек, API партнёра или ИИ-агент. Сверять закрытые тарифы с открытыми витринами каждый день.</p>
+        <p class="lang-en">Show the firm price and the flexibility price separately in search results and the API, with the premium by lead time. Flag who created the booking: a person, a partner API or an AI agent. Check closed rates against open storefronts every day.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Финансы</h3>
+        <h3 class="lang-en">Finance</h3>
+        <p class="lang-ru">Вести результат пилота против контрольного рынка Б. Учитывать прирост выручки и сохранение текущего объёма раздельно, чтобы не завысить эффект.</p>
+        <p class="lang-en">Track pilot results against control Market B. Account for revenue growth and retained volume separately so the effect is not overstated.</p>
+      </article>
+      <article class="card">
+        <h3 class="lang-ru">Аналитика и прогноз спроса</h3>
+        <h3 class="lang-en">Analytics and demand forecasting</h3>
+        <p class="lang-ru">Собрать ежедневный отчёт по шести критериям пилота. Перейти от прогноза по всем проданным броням к прогнозу с учётом вероятности отмены по каналу, тарифу и горизонту заезда.</p>
+        <p class="lang-en">Build a daily report on the six pilot criteria. Move from forecasting on all sold bookings to forecasting weighted by cancellation probability by channel, rate and lead time.</p>
+      </article>
+    </div>
+  </section>
+
+  <details open>
+    <summary><span class="lang-ru">Допущения и сборка цифр</span><span class="lang-en">Assumptions and how the figures are built</span></summary>
+    <p class="lang-ru">Портфель: 180 000 броней × 740 € = 133,2 млн € GBV. Чистая выручка 8,4 млн €, это 6,3% GBV. Гибкий тариф 76% броней (101,2 млн € GBV), твёрдый 24%. Ценность ожидания: 0,19 × 0,084 = 1,6%. Премия +0,50 млн €: платформа оставляет 1,5 п.п. премии на 33% гибкого GBV, где отель на прямом контракте принимает новую сетку: 0,015 × 0,33 × 101,2 = 0,50, около +6% к 8,4 млн €. Пилот 12% портфеля: выручка когорты 1,01 млн €, +6% = +60 тыс. € за 90 дней. Случай +1,40 млн €. Премия 0,50. Твёрдый спрос 0,70: закрытый зазор открывается ещё на 44% объёма (61% минус 17%), это 58,6 млн € GBV; при скидке 8-11% спрос на этой части растёт на 19%, то есть +11,1 млн € GBV × 6,3% = 0,70. Бронь остаётся у нас 0,20: если агенты будут перебронировать все 19% гибких броней с падением цены и 34% из них уйдут к другому поставщику, платформа потеряет 101,2 × 19% × 34% × 6,3% = 0,41 млн €. Сегодня, при перебронировании 8,1%, та же формула даёт 0,18 млн €. При перебронировании не выше 4,5% на сократившейся гибкой базе 85,2 млн € потеря составит 0,08 млн €. Правила пилота действуют на партнёрский канал, где 62% перебронирований, поэтому засчитываем (0,41 минус 0,08) × 62% = 0,20. Защита 2,10 млн € = 25% текущей выручки и в сумму прироста не входит. Синтетический контур, seed 42. Это синтетический разбор решения, не отчёт действующей компании.</p>
+    <p class="lang-en">Book: 180,000 bookings × €740 = €133.2m GBV. Net revenue €8.4m is 6.3% of GBV. Flexible rates are 76% of bookings (€101.2m GBV), firm rates 24%. Value of waiting: 0.19 × 0.084 = 1.6%. Premium of €0.50m: the platform keeps 1.5 pp of the premium on the 33% of flexible GBV where a directly contracted hotel accepts the new ladder: 0.015 × 0.33 × 101.2 = 0.50, about +6% on €8.4m. The pilot is 12% of the book: cohort revenue €1.01m, +6% = +€60k over 90 days. The +€1.40m case. Premium 0.50. Firm demand 0.70: the closed gap opens on another 44% of volume (61% minus 17%), or €58.6m GBV; at an 8-11% discount demand on that part grows 19%, so +€11.1m GBV × 6.3% = 0.70. Booking stays 0.20: if agents rebook all 19% of flexible bookings where the price falls and 34% of them leave for another supplier, the platform loses 101.2 × 19% × 34% × 6.3% = €0.41m. Today, at 8.1% rebooking, the same formula gives €0.18m. With rebooking at or below 4.5% on a smaller flexible base of €85.2m, the loss is €0.08m. The pilot rules act on the partner channel, which drives 62% of rebookings, so we count (0.41 minus 0.08) × 62% = 0.20. The €2.10m is 25% of current revenue and is not part of the gain. Synthetic book, seed 42. A synthetic case for the decision, not a company report.</p>
+  </details>
+  <p class="foot lang-ru">Синтетические данные · seed 42 · для разбора на комитете по ценообразованию</p>
+  <p class="foot lang-en">Synthetic data · seed 42 · for a pricing committee review</p>
+</main>
+<script>
+function setLang(lang) {
+  document.body.dataset.lang = lang;
+  document.documentElement.lang = lang;
+}
+</script>
+</body>
+</html>
